@@ -1,117 +1,131 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
-import 'font-awesome/css/font-awesome.min.css';
 import './assets/css/style.css';
+import {
+	MdCheckCircleOutline,
+	MdDeleteOutline,
+	MdModeEditOutline,
+} from 'react-icons/md';
 
 function App() {
-	const [inputText, setInputText] = useState();
-	const [items, setItems] = useState([]);
+	const [toDo, setToDo] = useState([
+		{ id: 1, title: 'task 1', status: false },
+		{ id: 2, title: 'task 2', status: false },
+	]);
 
-	const handleChange = (e) => {
-		setInputText(e.target.value);
+	const [newTask, setNewTask] = useState('');
+	const [toggleBtn, setToggleBtn] = useState(false);
+	const [editingTask, setEditingTask] = useState(null);
+
+	const addTask = () => {
+		if (newTask) {
+			if (toggleBtn) {
+				const updatedTasks = toDo.map((task) => {
+					if (task.id === editingTask.id) {
+						return { ...task, title: newTask };
+					}
+					return task;
+				});
+				setToDo(updatedTasks);
+				setToggleBtn(false);
+				setEditingTask(null);
+			} else {
+				let num = toDo.length + 1;
+				let newEntry = { id: num, title: newTask, status: false };
+				setToDo([...toDo, newEntry]);
+			}
+			setNewTask('');
+		}
 	};
 
-	const handleTaskList = () => {
-		setItems((oldItems) => {
-			return [...oldItems, inputText];
-		});
-		setInputText('');
+	const deleteTask = (id) => {
+		let newTaskList = toDo.filter((task) => task.id !== id);
+		setToDo(newTaskList);
 	};
 
-	const handleDelete = (id) => {
-		setItems((oldItems) => {
-			return oldItems.filter((arrElem, index) => {
-				return index !== id;
-			});
+	const markDone = (id) => {
+		const updatedTasks = toDo.map((task) => {
+			if (task.id === id) {
+				return { ...task, status: !task.status };
+			}
+			return task;
 		});
+		setToDo(updatedTasks);
 	};
 
-	const handleEdit = (id) => {
-		let newEditItem = items.find((item, index) => {
-			return index === id;
-		});
+	const editTask = (task) => {
+		setNewTask(task.title);
+		setToggleBtn(true);
+		setEditingTask(task);
+	};
 
-		setInputText(newEditItem);
+	const cancelUpdate = () => {
+		setNewTask('');
+		setToggleBtn(false);
+		setEditingTask(null);
 	};
 
 	return (
-		<section className='vh-100 gradient-custom'>
-			<div className='container py-5 h-100'>
-				<div className='row d-flex justify-content-center'>
-					<div className='col col-xl-10'>
-						<header className='mb-5'>
-							<h1 className='text-center fw-bolder text-primary'>MY TODOS</h1>
-						</header>
-						<div className='card'>
-							<div className='card-body p-5'>
-								<form className='d-flex justify-content-center align-items-center mb-4'>
-									<div className='form-outline flex-fill'>
-										<div className='form-floating'>
-											<input
-												type='text'
-												class='form-control'
-												id='floatingInput'
-												placeholder='New Task'
-												onChange={handleChange}
-												value={inputText}
-											/>
-											<label for='floatingInput'>New Task</label>
-										</div>
-									</div>
-									<button
-										type='submit'
-										className='btn btn-primary ms-2'
-										onClick={handleTaskList}
-									>
-										Add
-									</button>
-								</form>
-
-								<ul className='list-group mb-0'>
-									{items.map((item, index) => {
-										return (
-											<li
-												id={index}
-												key={index}
-												className='list-group-item d-flex align-items-center border-0 mb-2 rounded'
-												style={{ backgroundColor: '#f4f6f7' }}
-											>
-												<input
-													className='form-check-input me-2'
-													type='checkbox'
-													value=''
-													aria-label='...'
-												/>
-												{item}
-
-												<div className='action-btns'>
-													<button
-														className='btn btn-link p-0'
-														onClick={() => {
-															handleEdit(index);
-														}}
-													>
-														<i class='fa fa-edit'></i>
-													</button>
-													<button
-														className='btn btn-link text-danger'
-														onClick={() => {
-															handleDelete(index);
-														}}
-													>
-														<i class='fa fa-trash'></i>
-													</button>
-												</div>
-											</li>
-										);
-									})}
-								</ul>
-							</div>
-						</div>
+		<>
+			<div className='container App'>
+				<h2 className='my-5'>To Do List App (ReactJS)</h2>
+				<div className='row mb-5'>
+					<div className='col'>
+						<input
+							type='text'
+							className='form-control form-control-lg'
+							value={newTask}
+							onChange={(e) => {
+								setNewTask(e.target.value);
+							}}
+						/>
+					</div>
+					<div className='col-auto'>
+						<button
+							className='btn btn-lg btn-success'
+							onClick={addTask}
+						>
+							{toggleBtn ? 'Update' : 'Add'}
+						</button>
+						{toggleBtn && (
+							<button
+								className='btn btn-lg btn-warning ms-2'
+								onClick={cancelUpdate}
+							>
+								Cancel
+							</button>
+						)}
 					</div>
 				</div>
+				{toDo.length === 0 ? 'No Task' : ''}
+				{toDo.map((task, index) => (
+					<div
+						className='col taskBg'
+						key={task.id}
+					>
+						<div className={task.status ? 'done' : ''}>
+							<span className='taskNumber'>{index + 1}</span>
+							<span className='taskText'>{task.title}</span>
+						</div>
+						<div className='iconsWrap'>
+							<span onClick={() => markDone(task.id)}>
+								<MdCheckCircleOutline />
+							</span>
+							{task.status ? (
+								<></>
+							) : (
+								<span onClick={() => editTask(task)}>
+									<MdModeEditOutline />
+								</span>
+							)}
+							<span onClick={() => deleteTask(task.id)}>
+								<MdDeleteOutline />
+							</span>
+						</div>
+					</div>
+				))}
 			</div>
-		</section>
+		</>
 	);
 }
 
