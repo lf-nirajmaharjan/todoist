@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import './assets/css/style.css';
-import {
-	MdCheckCircleOutline,
-	MdDeleteOutline,
-	MdModeEditOutline,
-} from 'react-icons/md';
+
+import TodoAdd from './components/add-form';
+import TodoLists from './components/todo-lists';
+import Modal from './components/modal';
+import Empty from './components/empty';
 
 function App() {
-	const [toDo, setToDo] = useState([
-		{ id: 1, title: 'task 1', status: false },
-		{ id: 2, title: 'task 2', status: false },
-	]);
+	const [toDo, setToDo] = useState([]);
 
 	const [newTask, setNewTask] = useState('');
 	const [toggleBtn, setToggleBtn] = useState(false);
 	const [editingTask, setEditingTask] = useState(null);
+	const [showModal, setShowModal] = useState(false);
+	const [taskToDelete, setTaskToDelete] = useState(null);
+
+	// useEffect(() => {
+	// 	const localData = localStorage.getItem('toDo');
+	// 	setToDo(JSON.parse(localData));
+	// }, []);
 
 	const addTask = () => {
 		if (newTask) {
@@ -35,12 +39,24 @@ function App() {
 				setToDo([...toDo, newEntry]);
 			}
 			setNewTask('');
+
+			// localStorage.setItem('toDo', JSON.stringify(toDo));
 		}
+	};
+
+	const openModal = (taskId) => {
+		setTaskToDelete(taskId);
+		setShowModal(true);
+	};
+
+	const closeModal = () => {
+		setShowModal(false);
 	};
 
 	const deleteTask = (id) => {
 		let newTaskList = toDo.filter((task) => task.id !== id);
 		setToDo(newTaskList);
+		closeModal();
 	};
 
 	const markDone = (id) => {
@@ -51,6 +67,7 @@ function App() {
 			return task;
 		});
 		setToDo(updatedTasks);
+		closeModal();
 	};
 
 	const editTask = (task) => {
@@ -69,61 +86,34 @@ function App() {
 		<>
 			<div className='container App'>
 				<h2 className='my-5'>To Do List App (ReactJS)</h2>
-				<div className='row mb-5'>
-					<div className='col'>
-						<input
-							type='text'
-							className='form-control form-control-lg'
-							value={newTask}
-							onChange={(e) => {
-								setNewTask(e.target.value);
-							}}
-						/>
-					</div>
-					<div className='col-auto'>
-						<button
-							className='btn btn-lg btn-success'
-							onClick={addTask}
-						>
-							{toggleBtn ? 'Update' : 'Add'}
-						</button>
-						{toggleBtn && (
-							<button
-								className='btn btn-lg btn-warning ms-2'
-								onClick={cancelUpdate}
-							>
-								Cancel
-							</button>
-						)}
-					</div>
-				</div>
-				{toDo.length === 0 ? 'No Task' : ''}
-				{toDo.map((task, index) => (
-					<div
-						className='col taskBg'
-						key={task.id}
-					>
-						<div className={task.status ? 'done' : ''}>
-							<span className='taskNumber'>{index + 1}</span>
-							<span className='taskText'>{task.title}</span>
-						</div>
-						<div className='iconsWrap'>
-							<span onClick={() => markDone(task.id)}>
-								<MdCheckCircleOutline />
-							</span>
-							{task.status ? (
-								<></>
-							) : (
-								<span onClick={() => editTask(task)}>
-									<MdModeEditOutline />
-								</span>
-							)}
-							<span onClick={() => deleteTask(task.id)}>
-								<MdDeleteOutline />
-							</span>
-						</div>
-					</div>
-				))}
+				<TodoAdd
+					newTask={newTask}
+					setNewTask={setNewTask}
+					addTask={addTask}
+					cancelUpdate={cancelUpdate}
+					toggleBtn={toggleBtn}
+				/>
+
+				{toDo.length === 0 && <Empty content='No List Found' />}
+
+				<TodoLists
+					toDo={toDo}
+					markDone={markDone}
+					editTask={editTask}
+					openModal={openModal}
+				/>
+
+				{showModal && (
+					<Modal
+						closeModal={closeModal}
+						buttonLabel='delete'
+						title='Confirm Delete'
+						message='Are you sure you want to delete this item?'
+						onAction={() => {
+							deleteTask(taskToDelete);
+						}}
+					/>
+				)}
 			</div>
 		</>
 	);
